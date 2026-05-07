@@ -13,8 +13,8 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 searches = [
     ("gas natural Colombia mercado energía 2026", 2),
     ("energia Colombia XM embalses 2026", 1),
-    ("Guatemala electricity energy CNEE 2026", 1),
-    ("Guatemala energia electrica tarifa 2026", 1),
+    ("Guatemala CNEE tarifa electrica 2026", 1),
+    ("Guatemala AMM energia mayorista 2026", 1),
     ("energia Panama electricidad tarifas 2026", 1),
     ("gas natural Mexico energia inversion 2026", 2),
     ("energia Ecuador electricidad Cenace 2026", 1),
@@ -78,6 +78,7 @@ Analiza estas noticias reales de las últimas 72 horas y explica con precisión 
 Si alguna noticia no es relevante para estos mercados, indícalo claramente.
 No inventes datos. Solo analiza lo que está en las noticias proporcionadas.
 Si una noticia es sobre eventos, ferias, conferencias o temas no relacionados directamente con precios, tarifas, suministro o política energética, OMÍTELA completamente del análisis.
+IMPORTANTE: NO incluyas en el resumen las noticias que clasificaste como relevancia Baja. Solo incluye noticias de relevancia Alta o Media.
 {contexto}
 
 Responde en español con este formato:
