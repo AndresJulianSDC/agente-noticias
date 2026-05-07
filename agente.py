@@ -1,29 +1,54 @@
 import os
 import requests
+import xml.etree.ElementTree as ET
+from urllib.parse import quote
 
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
-GNEWS_API_KEY = os.environ["GNEWS_API_KEY"]
 
-# Múltiples búsquedas para aumentar resultados
-queries = [
-    "energy market Latin America",
-    "electricity gas Colombia Mexico",
-    "energia electrica latinoamerica"
+# Búsquedas específicas en Google News RSS
+searches = [
+    "energía eléctrica Colombia mercado regulado",
+    "gas natural Colombia precio",
+    "energia electrica Mexico Guatemala Panama Ecuador",
+    "electricity energy market Latin America",
+    "XM Colombia despacho energia",
 ]
 
 articulos = []
-for query in queries:
-    url = f"https://gnews.io/api/v4/search?q={query}&max=3&apikey={GNEWS_API_KEY}"
-    r = requests.get(url)
-    data = r.json()
-    print(f"Query '{query}': {data.get('totalArticles')} resultados")
-    articulos += data.get("articles", [])
-    if len(articulos) >= 5:
+for query in searches:
+    url = f"https://news.google.com/rss/search?q={quote(query)}&hl=es&gl=CO&ceid=CO:es"
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    if r.status_code != 200:
+        continue
+    root = ET.fromstring(r.content)
+    items = root.findall(".//item")
+    for item in items[:2]:
+        titulo = item.findtext("title") or ""
+        link = item.findtext("link") or ""
+        descripcion = item.findtext("description") or ""
+        fuente = item.findtext("source") or "Google News"
+        fecha = item.findtext("pubDate") or ""
+        articulos.append({
+            "titulo": titulo,
+            "link": link,
+            "descripcion": descripcion,
+            "fuente": fuente,
+            "fecha": fecha
+        })
+    if len(articulos) >= 8:
         break
 
-articulos = articulos[:5]
+# Eliminar duplicados por título
+vistos = set()
+unicos = []
+for art in articulos:
+    if art["titulo"] not in vistos:
+        vistos.add(art["titulo"])
+        unicos.append(art)
+
+articulos = unicos[:6]
 
 if not articulos:
     mensaje = "⚠️ No se encontraron noticias hoy sobre energía en los mercados de la región."
@@ -34,16 +59,15 @@ if not articulos:
 contexto = ""
 links = []
 for i, art in enumerate(articulos, 1):
-    titulo = art.get("title") or ""
-    fuente = art.get("source", {}).get("name") or ""
-    descripcion = art.get("description") or ""
-    url = art.get("url") or ""
-    contexto += f"\nNoticia {i}:\nTítulo: {titulo}\nFuente: {fuente}\nDescripción: {descripcion}\nURL: {url}\n"
-    links.append(f"🔗 {titulo}\n{url}")
+    contexto += f"\nNoticia {i}:\nTítulo: {art['titulo']}\nFuente: {art['fuente']}\nFecha: {art['fecha']}\nDescripción: {art['descripcion']}\nURL: {art['link']}\n"
+    links.append(f"🔗 {art['titulo']}\n{art['link']}")
 
-prompt = f"""Eres un analista experto en mercados de energía eléctrica y gas natural en Latinoamérica.
-Analiza estas noticias y explica su impacto en los mercados regulados y no regulados de Colombia, Guatemala, Panamá, México y Ecuador.
-Si las noticias están en inglés, tradúcelas primero.
+prompt = f"""Eres un analista senior experto en mercados de energía eléctrica y gas natural en Latinoamérica.
+Tu análisis será leído por profesionales de una multinacional del sector energético.
+
+Analiza estas noticias reales de hoy y explica con precisión técnica su impacto en los mercados regulados y no regulados de Colombia, Guatemala, Panamá, México y Ecuador.
+Si alguna noticia no es relevante para estos mercados, indícalo claramente.
+No inventes datos. Solo analiza lo que está en las noticias proporcionadas.
 
 {contexto}
 
@@ -54,13 +78,18 @@ Responde en español con este formato:
 🔹 Noticia 1:
 Título: ...
 Fuente: ...
+Fecha: ...
+Resumen: ...
 Impacto mercado regulado: ...
 Impacto mercado no regulado: ...
+Relevancia para la región: Alta / Media / Baja
 ¿Qué debes saber?: ...
 
 (repite para cada noticia)
 
-📌 Conclusión del día: ..."""
+📌 Conclusión estratégica del día: ...
+
+⚠️ Nota: Este análisis se basa en noticias reales verificables. Consulta los links fuente antes de tomar decisiones."""
 
 groq_url = "https://api.groq.com/openai/v1/chat/completions"
 headers = {
@@ -69,17 +98,24 @@ headers = {
 }
 body = {
     "model": "llama-3.3-70b-versatile",
-    "messages": [{"role": "user", "content": prompt}]
+    "messages": [{"role": "user", "content": prompt}],
+    "temperature": 0.3
 }
 
 r = requests.post(groq_url, headers=headers, json=body)
 analisis = r.json()["choices"][0]["message"]["content"]
 
-links_texto = "\n\n🔗 FUENTES:\n" + "\n\n".join(links)
+links_texto = "\n\n🔗 FUENTES VERIFICABLES:\n" + "\n\n".join(links)
 mensaje_final = analisis + links_texto
 
-if len(mensaje_final) > 4096:
-    mensaje_final = mensaje_final[:4090] + "..."
+# Telegram tiene límite de 4096 caracteres, enviamos en partes si es necesario
+def enviar_telegram(texto):
+    telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    requests.post(telegram_url, data={"chat_id": TELEGRAM_CHAT_ID, "text": texto})
 
-telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-requests.post(telegram_url, data={"chat_id": TELEGRAM_CHAT_ID, "text": mensaje_final})
+if len(mensaje_final) <= 4096:
+    enviar_telegram(mensaje_final)
+else:
+    partes = [mensaje_final[i:i+4000] for i in range(0, len(mensaje_final), 4000)]
+    for parte in partes:
+        enviar_telegram(parte)
