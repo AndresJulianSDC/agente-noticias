@@ -1,7 +1,7 @@
 import os
 import requests
 
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
+GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 TEMA = os.environ.get("TEMA", "inteligencia artificial")
@@ -32,17 +32,21 @@ Resumen: ...
 
 📌 Conclusión del día: ..."""
 
-url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+url = "https://api.groq.com/openai/v1/chat/completions"
 
-body = {
-    "contents": [{"parts": [{"text": prompt}]}]
+headers = {
+    "Authorization": f"Bearer {GROQ_API_KEY}",
+    "Content-Type": "application/json"
 }
 
-r = requests.post(url, json=body)
+body = {
+    "model": "llama-3.3-70b-versatile",
+    "messages": [{"role": "user", "content": prompt}]
+}
+
+r = requests.post(url, headers=headers, json=body)
 data = r.json()
-print(data)
-if "candidates" not in data:
-    raise Exception(f"Error de Gemini: {data}")
-mensaje = data["candidates"][0]["content"]["parts"][0]["text"]
+mensaje = data["choices"][0]["message"]["content"]
+
 telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
 requests.post(telegram_url, data={"chat_id": TELEGRAM_CHAT_ID, "text": mensaje})
