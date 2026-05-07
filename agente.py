@@ -11,9 +11,12 @@ query = "electricity energy gas natural Colombia Guatemala Panama Mexico Ecuador
 news_url = f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&pageSize=5&apiKey={NEWS_API_KEY}"
 
 r = requests.get(news_url)
+print("Status code:", r.status_code)
+print("Respuesta:", r.text[:500])
 data = r.json()
 articulos = data.get("articles", [])
 print("Respuesta NewsAPI:", data.get("status"), "- Total:", data.get("totalResults"), "- Error:", data.get("message"))
+
 
 if not articulos:
     mensaje = "⚠️ No se encontraron noticias hoy sobre energía en los mercados de la región."
