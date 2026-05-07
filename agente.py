@@ -1,19 +1,14 @@
 import os
 import requests
-import google.generativeai as genai
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 TEMA = os.environ.get("TEMA", "inteligencia artificial")
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.0-flash-exp")
+prompt = f"""Eres un agente de noticias. Analiza y resume las noticias más recientes e importantes sobre: {TEMA}
 
-prompt = f"""
-Eres un agente de noticias. Busca y analiza las noticias más recientes e importantes sobre: {TEMA}
-
-Responde en este formato exacto:
+Responde en este formato:
 
 📰 RESUMEN DEL DÍA — {TEMA.upper()}
 
@@ -35,11 +30,17 @@ Fuente: ...
 Resumen: ...
 ¿Qué debes saber?: ...
 
-📌 Conclusión del día: ...
-"""
+📌 Conclusión del día: ..."""
 
-response = model.generate_content(prompt)
-mensaje = response.text
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
-url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": mensaje})
+body = {
+    "contents": [{"parts": [{"text": prompt}]}]
+}
+
+r = requests.post(url, json=body)
+data = r.json()
+mensaje = data["candidates"][0]["content"]["parts"][0]["text"]
+
+telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+requests.post(telegram_url, data={"chat_id": TELEGRAM_CHAT_ID, "text": mensaje})
