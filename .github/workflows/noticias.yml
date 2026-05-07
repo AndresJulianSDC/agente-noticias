@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar dependencias
-        run: pip install google-generativeai requests
+        run: pip install requests
 
       - name: Ejecutar agente
         env:
