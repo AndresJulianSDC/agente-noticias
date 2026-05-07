@@ -4,19 +4,24 @@ import requests
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
-NEWS_API_KEY = os.environ["NEWS_API_KEY"]
+GNEWS_API_KEY = os.environ["GNEWS_API_KEY"]
 
-# Buscar noticias en inglés
-query = "electricity energy gas natural Colombia Guatemala Panama Mexico Ecuador"
-news_url = f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&pageSize=5&apiKey={NEWS_API_KEY}"
+# Buscar noticias reales con GNews
+query = "energia electrica gas natural Colombia Guatemala Panama Mexico Ecuador"
+news_url = f"https://gnews.io/api/v4/search?q={query}&lang=es&max=5&apikey={GNEWS_API_KEY}"
 
 r = requests.get(news_url)
-print("Status code:", r.status_code)
-print("Respuesta:", r.text[:500])
 data = r.json()
-articulos = data.get("articles", [])
-print("Respuesta NewsAPI:", data.get("status"), "- Total:", data.get("totalResults"), "- Error:", data.get("message"))
+print("GNews status:", r.status_code, "- Total:", data.get("totalArticles"))
 
+articulos = data.get("articles", [])
+
+if not articulos:
+    # Intentar en inglés si no hay en español
+    news_url = f"https://gnews.io/api/v4/search?q=electricity+gas+natural+Colombia+Guatemala+Panama+Mexico+Ecuador&lang=en&max=5&apikey={GNEWS_API_KEY}"
+    r = requests.get(news_url)
+    data = r.json()
+    articulos = data.get("articles", [])
 
 if not articulos:
     mensaje = "⚠️ No se encontraron noticias hoy sobre energía en los mercados de la región."
@@ -28,14 +33,15 @@ contexto = ""
 links = []
 for i, art in enumerate(articulos, 1):
     titulo = art.get("title") or ""
-    fuente = art["source"].get("name") or ""
+    fuente = art.get("source", {}).get("name") or ""
     descripcion = art.get("description") or ""
     url = art.get("url") or ""
     contexto += f"\nNoticia {i}:\nTítulo: {titulo}\nFuente: {fuente}\nDescripción: {descripcion}\nURL: {url}\n"
     links.append(f"🔗 {titulo}\n{url}")
 
 prompt = f"""Eres un analista experto en mercados de energía eléctrica y gas natural en Latinoamérica.
-Las siguientes noticias están en inglés. Tradúcelas, analízalas y explica su impacto en los mercados regulados y no regulados de Colombia, Guatemala, Panamá, México y Ecuador.
+Analiza estas noticias y explica su impacto en los mercados regulados y no regulados de Colombia, Guatemala, Panamá, México y Ecuador.
+Si las noticias están en inglés, tradúcelas primero.
 
 {contexto}
 
