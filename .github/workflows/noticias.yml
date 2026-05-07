@@ -1,0 +1,30 @@
+name: Agente de Noticias Diario
+
+on:
+  schedule:
+    - cron: '0 13 * * *'  # 8:00 AM Colombia (UTC-5)
+  workflow_dispatch:  # permite ejecutarlo manualmente
+
+jobs:
+  enviar-noticias:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install google-generativeai requests
+
+      - name: Ejecutar agente
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TEMA: "inteligencia artificial"
+        run: python agente.py
