@@ -10,11 +10,12 @@ TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 searches = [
-    "energía eléctrica Colombia mercado regulado",
-    "gas natural Colombia precio",
-    "energia electrica Mexico Guatemala Panama Ecuador",
-    "electricity energy market Latin America",
-    "XM Colombia despacho energia",
+    "energía eléctrica gas natural Colombia mercado regulado 2026",
+    "energia electrica gas natural Guatemala mercado 2026",
+    "energia electrica gas natural Panama mercado 2026",
+    "energia electrica gas natural Mexico mercado 2026",
+    "energia electrica gas natural Ecuador mercado 2026",
+    "electricity energy market Latin America 2026",
 ]
 
 articulos = []
