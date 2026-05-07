@@ -2,12 +2,13 @@ import os
 import requests
 import xml.etree.ElementTree as ET
 from urllib.parse import quote
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-# Búsquedas específicas en Google News RSS
 searches = [
     "energía eléctrica Colombia mercado regulado",
     "gas natural Colombia precio",
@@ -17,6 +18,8 @@ searches = [
 ]
 
 articulos = []
+ahora = datetime.now(timezone.utc)
+
 for query in searches:
     url = f"https://news.google.com/rss/search?q={quote(query)}&hl=es&gl=CO&ceid=CO:es"
     r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -24,18 +27,25 @@ for query in searches:
         continue
     root = ET.fromstring(r.content)
     items = root.findall(".//item")
-    for item in items[:2]:
+    for item in items[:5]:
         titulo = item.findtext("title") or ""
         link = item.findtext("link") or ""
         descripcion = item.findtext("description") or ""
         fuente = item.findtext("source") or "Google News"
-        fecha = item.findtext("pubDate") or ""
+        fecha_str = item.findtext("pubDate") or ""
+        try:
+            fecha = parsedate_to_datetime(fecha_str)
+            horas_diff = (ahora - fecha).total_seconds() / 3600
+            if horas_diff > 72:
+                continue
+        except:
+            continue
         articulos.append({
             "titulo": titulo,
             "link": link,
             "descripcion": descripcion,
             "fuente": fuente,
-            "fecha": fecha
+            "fecha": fecha_str
         })
     if len(articulos) >= 8:
         break
@@ -51,7 +61,7 @@ for art in articulos:
 articulos = unicos[:6]
 
 if not articulos:
-    mensaje = "⚠️ No se encontraron noticias hoy sobre energía en los mercados de la región."
+    mensaje = "⚠️ No se encontraron noticias en las últimas 72 horas sobre energía en los mercados de la región."
     telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(telegram_url, data={"chat_id": TELEGRAM_CHAT_ID, "text": mensaje})
     exit()
@@ -65,7 +75,7 @@ for i, art in enumerate(articulos, 1):
 prompt = f"""Eres un analista senior experto en mercados de energía eléctrica y gas natural en Latinoamérica.
 Tu análisis será leído por profesionales de una multinacional del sector energético.
 
-Analiza estas noticias reales de hoy y explica con precisión técnica su impacto en los mercados regulados y no regulados de Colombia, Guatemala, Panamá, México y Ecuador.
+Analiza estas noticias reales de las últimas 72 horas y explica con precisión técnica su impacto en los mercados regulados y no regulados de Colombia, Guatemala, Panamá, México y Ecuador.
 Si alguna noticia no es relevante para estos mercados, indícalo claramente.
 No inventes datos. Solo analiza lo que está en las noticias proporcionadas.
 
@@ -89,7 +99,7 @@ Relevancia para la región: Alta / Media / Baja
 
 📌 Conclusión estratégica del día: ...
 
-⚠️ Nota: Este análisis se basa en noticias reales verificables. Consulta los links fuente antes de tomar decisiones."""
+⚠️ Nota: Este análisis se basa en noticias reales de las últimas 72 horas. Verifica los links antes de tomar decisiones."""
 
 groq_url = "https://api.groq.com/openai/v1/chat/completions"
 headers = {
@@ -108,7 +118,6 @@ analisis = r.json()["choices"][0]["message"]["content"]
 links_texto = "\n\n🔗 FUENTES VERIFICABLES:\n" + "\n\n".join(links)
 mensaje_final = analisis + links_texto
 
-# Telegram tiene límite de 4096 caracteres, enviamos en partes si es necesario
 def enviar_telegram(texto):
     telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(telegram_url, data={"chat_id": TELEGRAM_CHAT_ID, "text": texto})
