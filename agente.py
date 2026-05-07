@@ -6,22 +6,24 @@ TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 GNEWS_API_KEY = os.environ["GNEWS_API_KEY"]
 
-# Buscar noticias reales con GNews
-query = "energia electrica gas natural Colombia Guatemala Panama Mexico Ecuador"
-news_url = f"https://gnews.io/api/v4/search?q={query}&lang=es&max=5&apikey={GNEWS_API_KEY}"
+# Múltiples búsquedas para aumentar resultados
+queries = [
+    "energy market Latin America",
+    "electricity gas Colombia Mexico",
+    "energia electrica latinoamerica"
+]
 
-r = requests.get(news_url)
-data = r.json()
-print("GNews status:", r.status_code, "- Total:", data.get("totalArticles"))
-
-articulos = data.get("articles", [])
-
-if not articulos:
-    # Intentar en inglés si no hay en español
-    news_url = f"https://gnews.io/api/v4/search?q=electricity+gas+natural+Colombia+Guatemala+Panama+Mexico+Ecuador&lang=en&max=5&apikey={GNEWS_API_KEY}"
-    r = requests.get(news_url)
+articulos = []
+for query in queries:
+    url = f"https://gnews.io/api/v4/search?q={query}&max=3&apikey={GNEWS_API_KEY}"
+    r = requests.get(url)
     data = r.json()
-    articulos = data.get("articles", [])
+    print(f"Query '{query}': {data.get('totalArticles')} resultados")
+    articulos += data.get("articles", [])
+    if len(articulos) >= 5:
+        break
+
+articulos = articulos[:5]
 
 if not articulos:
     mensaje = "⚠️ No se encontraron noticias hoy sobre energía en los mercados de la región."
