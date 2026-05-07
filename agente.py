@@ -13,6 +13,7 @@ news_url = f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&page
 r = requests.get(news_url)
 data = r.json()
 articulos = data.get("articles", [])
+print("Respuesta NewsAPI:", data.get("status"), "- Total:", data.get("totalResults"), "- Error:", data.get("message"))
 
 if not articulos:
     mensaje = "⚠️ No se encontraron noticias hoy sobre energía en los mercados de la región."
