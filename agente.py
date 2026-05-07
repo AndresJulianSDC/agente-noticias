@@ -11,12 +11,13 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 # Un artículo garantizado por país + búsqueda regional
 searches = [
-    ("gas natural Colombia 2026", 2),
-    ("energia Colombia XM 2026", 1),
-    ("Guatemala electricity energy market 2026", 1),
-    ("energia Panama electricidad 2026", 1),
-    ("gas natural Mexico energia 2026", 2),
-    ("energia Ecuador electricidad 2026", 1),
+    ("gas natural Colombia mercado energía 2026", 2),
+    ("energia Colombia XM embalses 2026", 1),
+    ("Guatemala electricity energy CNEE 2026", 1),
+    ("Guatemala energia electrica tarifa 2026", 1),
+    ("energia Panama electricidad tarifas 2026", 1),
+    ("gas natural Mexico energia inversion 2026", 2),
+    ("energia Ecuador electricidad Cenace 2026", 1),
 ]
 
 articulos = []
@@ -76,7 +77,7 @@ Tu análisis será leído por profesionales de una multinacional del sector ener
 Analiza estas noticias reales de las últimas 72 horas y explica con precisión técnica su impacto en los mercados regulados y no regulados de Colombia, Guatemala, Panamá, México y Ecuador.
 Si alguna noticia no es relevante para estos mercados, indícalo claramente.
 No inventes datos. Solo analiza lo que está en las noticias proporcionadas.
-
+Si una noticia es sobre eventos, ferias, conferencias o temas no relacionados directamente con precios, tarifas, suministro o política energética, OMÍTELA completamente del análisis.
 {contexto}
 
 Responde en español con este formato:
