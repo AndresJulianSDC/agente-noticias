@@ -40,7 +40,9 @@ body = {
 
 r = requests.post(url, json=body)
 data = r.json()
+print(data)
+if "candidates" not in data:
+    raise Exception(f"Error de Gemini: {data}")
 mensaje = data["candidates"][0]["content"]["parts"][0]["text"]
-
 telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
 requests.post(telegram_url, data={"chat_id": TELEGRAM_CHAT_ID, "text": mensaje})
