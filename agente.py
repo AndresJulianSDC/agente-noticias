@@ -8,7 +8,7 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 TEMA = os.environ.get("TEMA", "inteligencia artificial")
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-2.0-flash-exp")
 
 prompt = f"""
 Eres un agente de noticias. Busca y analiza las noticias más recientes e importantes sobre: {TEMA}
