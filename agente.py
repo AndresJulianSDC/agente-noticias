@@ -11,12 +11,12 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 # Un artículo garantizado por país + búsqueda regional
 searches = [
-    ("energía eléctrica gas natural Colombia mercado regulado 2026", 2),
-    ("energia electrica gas natural Guatemala mercado 2026", 1),
-    ("energia electrica gas natural Panama mercado 2026", 1),
-    ("energia electrica gas natural Mexico mercado 2026", 2),
-    ("energia electrica gas natural Ecuador mercado 2026", 1),
-    ("electricity energy market Latin America 2026", 1),
+    ("gas natural Colombia 2026", 2),
+    ("energia Colombia XM 2026", 1),
+    ("energia Guatemala electricidad 2026", 1),
+    ("energia Panama electricidad 2026", 1),
+    ("gas natural Mexico energia 2026", 2),
+    ("energia Ecuador electricidad 2026", 1),
 ]
 
 articulos = []
