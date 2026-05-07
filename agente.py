@@ -9,26 +9,31 @@ GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
+# Un artículo garantizado por país + búsqueda regional
 searches = [
-    "energía eléctrica gas natural Colombia mercado regulado 2026",
-    "energia electrica gas natural Guatemala mercado 2026",
-    "energia electrica gas natural Panama mercado 2026",
-    "energia electrica gas natural Mexico mercado 2026",
-    "energia electrica gas natural Ecuador mercado 2026",
-    "electricity energy market Latin America 2026",
+    ("energía eléctrica gas natural Colombia mercado regulado 2026", 2),
+    ("energia electrica gas natural Guatemala mercado 2026", 1),
+    ("energia electrica gas natural Panama mercado 2026", 1),
+    ("energia electrica gas natural Mexico mercado 2026", 2),
+    ("energia electrica gas natural Ecuador mercado 2026", 1),
+    ("electricity energy market Latin America 2026", 1),
 ]
 
 articulos = []
 ahora = datetime.now(timezone.utc)
+vistos = set()
 
-for query in searches:
+for query, max_por_busqueda in searches:
     url = f"https://news.google.com/rss/search?q={quote(query)}&hl=es&gl=CO&ceid=CO:es"
     r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
     if r.status_code != 200:
         continue
     root = ET.fromstring(r.content)
     items = root.findall(".//item")
-    for item in items[:5]:
+    count = 0
+    for item in items:
+        if count >= max_por_busqueda:
+            break
         titulo = item.findtext("title") or ""
         link = item.findtext("link") or ""
         descripcion = item.findtext("description") or ""
@@ -41,6 +46,9 @@ for query in searches:
                 continue
         except:
             continue
+        if titulo in vistos:
+            continue
+        vistos.add(titulo)
         articulos.append({
             "titulo": titulo,
             "link": link,
@@ -48,18 +56,7 @@ for query in searches:
             "fuente": fuente,
             "fecha": fecha_str
         })
-    if len(articulos) >= 8:
-        break
-
-# Eliminar duplicados por título
-vistos = set()
-unicos = []
-for art in articulos:
-    if art["titulo"] not in vistos:
-        vistos.add(art["titulo"])
-        unicos.append(art)
-
-articulos = unicos[:6]
+        count += 1
 
 if not articulos:
     mensaje = "⚠️ No se encontraron noticias en las últimas 72 horas sobre energía en los mercados de la región."
