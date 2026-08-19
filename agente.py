@@ -107,7 +107,7 @@ headers = {
     "Content-Type": "application/json"
 }
 body = {
-    "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+    "model": "openai/gpt-oss-20b",
     "messages": [{"role": "user", "content": prompt}],
     "temperature": 0.3
 }
