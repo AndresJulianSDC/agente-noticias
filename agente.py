@@ -113,7 +113,10 @@ body = {
 }
 
 r = requests.post(groq_url, headers=headers, json=body)
-analisis = r.json()["choices"][0]["message"]["content"]
+data = r.json()
+if "choices" not in data:
+    raise Exception(f"Error Groq: {data}")
+analisis = data["choices"][0]["message"]["content"]
 
 links_texto = "\n\n🔗 FUENTES VERIFICABLES:\n" + "\n\n".join(links)
 mensaje_final = analisis + links_texto
